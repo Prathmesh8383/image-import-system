@@ -1,29 +1,37 @@
 require("dotenv").config();
-
 const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
 
-// ---- APP CONFIG ----
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// ---- MIDDLEWARE ----
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-// ---- DATABASE CONFIG ----
+// Database setup
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false } // Required for Render Postgres
+  ssl: {
+    rejectUnauthorized: false, // required for Render Postgres
+  },
 });
 
-// ---- HEALTH CHECK ----
+// Google service account
+let googleAccount;
+try {
+  googleAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
+} catch (err) {
+  console.error("GOOGLE_SERVICE_ACCOUNT is invalid or missing", err);
+}
+
+// Health check
 app.get("/", (req, res) => {
   res.send("API Service is running 🚀");
 });
 
-// ---- GET IMAGES API ----
+// Get images
 app.get("/images", async (req, res) => {
   try {
     const result = await pool.query(
@@ -36,13 +44,7 @@ app.get("/images", async (req, res) => {
   }
 });
 
-// ---- GOOGLE SERVICE ACCOUNT (for future Google Drive integration) ----
-const serviceAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
-
-// Example usage: 
-// console.log(serviceAccount.client_email);
-
-// ---- START SERVER ----
+// Start server
 app.listen(PORT, () => {
-  console.log(`API Service running on http://localhost:${PORT}`);
+  console.log(`API Service running on port ${PORT}`);
 });
