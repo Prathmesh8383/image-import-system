@@ -1,50 +1,84 @@
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
-const { Pool } = require("pg");
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 4000;
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+/* ================================
+   SAFE ENV VARIABLE PARSING
+================================ */
 
-// Database setup
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false, // required for Render Postgres
-  },
-});
+// PORT
+const PORT = process.env.PORT || 10000;
 
-// Google service account
-let googleAccount;
+// ALLOWED_ORIGINS (JSON array expected)
+let allowedOrigins = [];
 try {
-  googleAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
-} catch (err) {
-  console.error("GOOGLE_SERVICE_ACCOUNT is invalid or missing", err);
+  allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? JSON.parse(process.env.ALLOWED_ORIGINS)
+    : [];
+} catch (error) {
+  console.error("❌ Invalid JSON in ALLOWED_ORIGINS env variable");
+  allowedOrigins = [];
 }
 
-// Health check
+// APP_CONFIG (optional JSON config)
+let appConfig = {};
+try {
+  appConfig = process.env.APP_CONFIG
+    ? JSON.parse(process.env.APP_CONFIG)
+    : {};
+} catch (error) {
+  console.error("❌ Invalid JSON in APP_CONFIG env variable");
+  appConfig = {};
+}
+
+/* ================================
+   MIDDLEWARES
+================================ */
+
+app.use(express.json());
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // allow requests with no origin (Postman, curl)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
+  })
+);
+
+/* ================================
+   ROUTES
+================================ */
+
 app.get("/", (req, res) => {
-  res.send("API Service is running 🚀");
+  res.status(200).json({
+    success: true,
+    message: "Image Import API is running 🚀",
+    configLoaded: Object.keys(appConfig).length > 0,
+  });
 });
 
-// Get images
-app.get("/images", async (req, res) => {
-  try {
-    const result = await pool.query(
-      "SELECT id, name, s3_url, size, mime_type, created_at FROM images ORDER BY created_at DESC"
-    );
-    res.json(result.rows);
-  } catch (err) {
-    console.error("DB error:", err);
-    res.status(500).json({ error: "Failed to fetch images" });
-  }
+// Health check
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "OK" });
 });
 
-// Start server
+/* ================================
+   SERVER START
+================================ */
+
 app.listen(PORT, () => {
-  console.log(`API Service running on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log("Allowed Origins:", allowedOrigins);
 });
