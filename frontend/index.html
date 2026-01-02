@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Google Drive Image Import</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    input {
+      width: 70%;
+      padding: 10px;
+    }
+
+    button {
+      padding: 10px 15px;
+      margin-left: 5px;
+      cursor: pointer;
+    }
+
+    .images {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+    }
+
+    .card {
+      background: #fff;
+      padding: 10px;
+      border-radius: 6px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .card img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+    }
+
+    .card p {
+      font-size: 12px;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📂 Google Drive Image Import</h1>
+
+  <input
+    id="folderUrl"
+    value="https://drive.google.com/drive/folders/1U7_L43KyauzMpG-daEqBVae9i5u6mo4p"
+  />
+  <button onclick="importImages()">Import Images</button>
+
+  <h2>🖼 Imported Images</h2>
+  <button onclick="loadImages()">Refresh List</button>
+
+  <div id="images" class="images"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
